@@ -1,3 +1,4 @@
+import re
 import sys
 import base64
 import logging
@@ -67,13 +68,24 @@ def extract_ip_info(host: ET.Element) -> str:
     return ip
 
 
+# Extract the chatset infomation from the HTTP response header
+def extract_charset(payload: bytes) -> str:
+    header = payload.split(b'\r\n\r\n', 1)[0]
+    decoded_header = header.decode('utf-8')
+    match = re.search(r'charset=(.*)', decoded_header)
+    return match.group(1) if match else 'utf-8'
+
+
 # Decode the base64 encoded request and response payload if needed
-def decode_payload(payload: ET.Element) -> str:
+def decode_payload(payload: ET.Element, charset: str = 'utf-8') -> str:
     try:
         payload_text = extract_text(payload)
         b64_flag = payload.attrib.get('base64') == 'true'
         if (b64_flag):
-            decoded_payload = base64.b64decode(payload_text).decode('utf-8')
+            b64_decoded_payload = base64.b64decode(payload_text)
+            charset = extract_charset(b64_decoded_payload)
+            decoded_payload = b64_decoded_payload.decode(
+                charset, errors='ignore')
             return decoded_payload
         else:
             return payload_text
@@ -85,6 +97,9 @@ def decode_payload(payload: ET.Element) -> str:
 def fetch_packet_data(root: ET.Element) -> Generator[dict, None, None]:
     # Iterate over the items
     for item in root.iter('item'):
+
+        # Get the mine type of the response
+        mine_type = extract_text(item.find('mimetype'))
 
         # Get all the child from the item
         yield {
@@ -100,8 +115,8 @@ def fetch_packet_data(root: ET.Element) -> Generator[dict, None, None]:
             'request': decode_payload(item.find('request')),
             'status': extract_text(item.find('status')),
             'response_length': extract_text(item.find('responselength')),
-            'mime_type': extract_text(item.find('mimetype')),
-            'response': decode_payload(item.find('response')),
+            'mime_type': mine_type,
+            'response': decode_payload(item.find('response')) if mine_type == 'HTML' else '',
             'comment': extract_text(item.find('comment'))
         }
 
