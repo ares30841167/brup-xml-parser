@@ -70,14 +70,21 @@ def extract_ip_info(host: ET.Element) -> str:
 
 # Extract the chatset infomation from the HTTP response header
 def extract_charset(payload: bytes) -> str:
+    DEFAULT_CHARSET = 'utf-8'
+
     header = payload.split(b'\r\n\r\n', 1)[0]
-    decoded_header = header.decode('utf-8')
+    decoded_header = header.decode(DEFAULT_CHARSET)
+
     match = re.search(r'Content-Type:.*?charset=(.*)', decoded_header)
-    return match.group(1) if match else 'utf-8'
+
+    charset = match.group(1).strip() if match else DEFAULT_CHARSET
+    charset = DEFAULT_CHARSET if charset == '' else charset
+
+    return charset
 
 
 # Decode the base64 encoded request and response payload if needed
-def decode_payload(payload: ET.Element, charset: str = 'utf-8') -> str:
+def decode_payload(payload: ET.Element) -> str:
     try:
         payload_text = extract_text(payload)
         b64_flag = payload.attrib.get('base64') == 'true'
