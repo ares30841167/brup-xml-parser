@@ -87,7 +87,7 @@ def extract_charset(payload: bytes) -> str:
 def decode_payload(payload: ET.Element) -> str:
     try:
         payload_text = extract_text(payload)
-        b64_flag = payload.attrib.get('base64') == 'true'
+        b64_flag = bool(payload.attrib.get('base64'))
         if (b64_flag):
             b64_decoded_payload = base64.b64decode(payload_text)
             charset = extract_charset(b64_decoded_payload)
