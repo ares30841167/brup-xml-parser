@@ -72,7 +72,12 @@ def extract_ip_info(host: ET.Element) -> str:
 def extract_charset(payload: bytes) -> str:
     DEFAULT_CHARSET = 'utf-8'
 
-    header = payload.split(b'\r\n\r\n', 1)[0]
+    splited_payload = payload.split(b'\r\n\r\n', 1)
+
+    if (len(splited_payload) == 1):
+        return DEFAULT_CHARSET
+
+    header = splited_payload[0]
     decoded_header = header.decode(DEFAULT_CHARSET)
 
     match = re.search(r'Content-Type:.*?charset=(.*)', decoded_header)
