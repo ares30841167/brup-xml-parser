@@ -110,8 +110,8 @@ def fetch_packet_data(root: ET.Element) -> Generator[dict, None, None]:
     # Iterate over the items
     for item in root.iter('item'):
 
-        # Get the mine type of the response
-        mine_type = extract_text(item.find('mimetype'))
+        # Get the mime type of the response
+        mime_type = extract_text(item.find('mimetype'))
 
         # Get all the child from the item
         yield {
@@ -127,8 +127,8 @@ def fetch_packet_data(root: ET.Element) -> Generator[dict, None, None]:
             'request': decode_payload(item.find('request')),
             'status': extract_text(item.find('status')),
             'response_length': extract_text(item.find('responselength')),
-            'mime_type': mine_type,
-            'response': decode_payload(item.find('response')) if mine_type == 'HTML' else '',
+            'mime_type': mime_type,
+            'response': decode_payload(item.find('response')) if mime_type == 'HTML' else '',
             'comment': extract_text(item.find('comment'))
         }
 
